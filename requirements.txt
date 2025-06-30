@@ -1,0 +1,16 @@
+# Este archivo define todas las bibliotecas necesarias para que el proyecto MedBot-Triage funcione correctamente.
+# Incluye herramientas para construir la API web (FastAPI), procesar PDFs, usar modelos de lenguaje (OpenAI),
+# realizar búsquedas semánticas (FAISS) y manejar configuraciones (dotenv).
+
+fastapi                 # Framework web para crear la API del chatbot.
+faiss-cpu               # Motor de búsqueda vectorial (versión para CPU).
+uvicorn                 # Servidor para correr la app FastAPI en desarrollo.
+
+# Módulos principales de LangChain, para integrar el LLM y trabajar con cadenas de razonamiento.
+langchain-core>=0.1.48
+langchain-community>=0.3.26
+langchain-openai>=0.1.6
+
+pypdf                   # Lector de documentos PDF, usado para procesar contenido médico.
+pydantic                # Validación y tipado de datos, útil para estructurar las respuestas del bot.
+python-dotenv           # Carga automática de la clave API desde un archivo .env.

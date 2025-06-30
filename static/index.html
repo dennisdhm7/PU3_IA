@@ -1,0 +1,120 @@
+<!--
+Archivo: static/index.html
+Autor: Christian Dennis Hinojosa Mucho
+-->
+<!DOCTYPE html>
+<html lang="es" class="h-full dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MedBot-Triage</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com/3.4.5"></script>
+  <style>html{scroll-behavior:smooth}</style>
+</head>
+<body class="h-full flex flex-col bg-gray-50 dark:bg-gray-900
+            text-gray-800 dark:text-gray-200 transition-colors">
+
+  <!-- Header ---------------------------------------------------------------->
+  <header class="bg-teal-600 text-white py-4 px-6 flex items-center justify-between">
+    <h1 class="text-xl font-bold flex items-center gap-2">🩺 MedBot-Triage</h1>
+    <label class="inline-flex items-center cursor-pointer select-none">
+      <span class="text-sm mr-2">🌙</span>
+      <input id="themeToggle" type="checkbox" class="peer sr-only">
+      <div class="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-gray-700 relative
+                  after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                  after:bg-white after:h-5 after:w-5 after:rounded-full after:transition-all
+                  peer-checked:after:translate-x-full"></div>
+      <span class="text-sm ml-2">☀️</span>
+    </label>
+  </header>
+
+  <!-- Chat container -------------------------------------------------------->
+  <main class="flex-1 flex flex-col items-center overflow-hidden">
+    <div id="chat"
+         class="w-full max-w-2xl flex-1 overflow-y-auto px-4 py-6 space-y-4">
+      <!-- mensajes aquí -->
+    </div>
+
+    <!-- Input bar ----------------------------------------------------------->
+    <form id="form" class="w-full max-w-2xl flex gap-3 px-4 py-4 bg-white
+                           dark:bg-gray-800 border-t border-gray-300
+                           dark:border-gray-700">
+      <textarea id="q" rows="1" required
+        class="flex-1 resize-none rounded-lg px-3 py-2 bg-gray-100
+               dark:bg-gray-900 border border-gray-300 dark:border-gray-600
+               focus:outline-none focus:ring-2 focus:ring-teal-500
+               placeholder:text-gray-400 dark:placeholder:text-gray-500"
+        placeholder="Escribe tus síntomas y presiona Enter…"></textarea>
+      <button class="bg-teal-600 hover:bg-teal-500 text-white px-5 py-2 rounded-lg
+                     shrink-0 transition-colors">Enviar</button>
+    </form>
+  </main>
+
+  <script>
+  const $ = id => document.getElementById(id);
+  const chatBox=$('chat'), form=$('form'), area=$('q');
+  const BIENVENIDA =
+    `¡Hola! Soy MedBot-Triage 🤖.\n` +
+    `Describe tus síntomas y te orientaré de inmediato.`;
+
+  /* tema */
+  $('themeToggle').addEventListener('change', () =>
+    document.documentElement.classList.toggle('dark'));
+
+  area.addEventListener('input', ()=>{
+    area.style.height='auto';
+    area.style.height=area.scrollHeight+'px';
+  });
+
+  function addBubble(text,side){
+    const bg=side==='user'?'bg-teal-600 text-white':'bg-gray-200 dark:bg-gray-700';
+    chatBox.insertAdjacentHTML('beforeend',
+      `<div class="flex ${side==='user'?'justify-end':''}">
+         <p class="max-w-[80%] ${bg} px-4 py-2 rounded-2xl whitespace-pre-wrap">${text}</p>
+       </div>`);
+    chatBox.scrollTop=chatBox.scrollHeight;
+  }
+
+  async function send(text){
+    addBubble(text,'user');
+    addBubble('⌛ Pensando…','bot');
+
+    /* llamada API */
+    const res=await fetch('/chat',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({question:text})});
+    const data=await res.json();
+
+    let msg = '';
+
+    const esSaludo = data.diagnosticos.length === 1 && data.diagnosticos[0] === 'No aplica';
+
+    if (!esSaludo) {
+    msg += `Diagnóstico: ${data.diagnosticos.join(', ')}\n`;
+    msg += `Confianza: ${Math.round(data.nivel_confianza * 100)}%\n`;
+    msg += `Recomendación: ${data.recomendacion}`;
+    } else {
+    /* Solo muestra el texto tal cual, sin prefijo */
+    msg += data.recomendacion;
+    }
+
+    chatBox.lastElementChild.querySelector('p').textContent = msg.trim();
+  }
+
+  form.addEventListener('submit',e=>{
+    e.preventDefault();
+    const txt=area.value.trim(); if(!txt) return;
+    area.value=''; area.style.height='auto'; send(txt);
+  });
+  area.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();form.requestSubmit();}
+  });
+
+  /* 👉 burbuja inicial */
+  document.addEventListener('DOMContentLoaded',()=>
+    addBubble(BIENVENIDA,'bot'));
+</script>
+</body>
+</html>
